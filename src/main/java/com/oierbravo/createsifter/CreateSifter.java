@@ -1,110 +1,119 @@
 package com.oierbravo.createsifter;
 
-import com.oierbravo.createsifter.content.contraptions.components.sifter.andesite.SifterBlockEntity;
-import com.oierbravo.createsifter.content.contraptions.components.sifter.brass.BrassSifterBlockEntity;
-import com.oierbravo.createsifter.infrastucture.config.MConfigs;
-import com.oierbravo.createsifter.infrastucture.data.ModDataGen;
-import com.oierbravo.createsifter.ponders.ModPonderPlugin;
-import com.oierbravo.createsifter.register.*;
-import com.oierbravo.mechanicals.utility.RegistrateLangBuilder;
-import com.simibubi.create.foundation.data.CreateRegistrate;
-import com.simibubi.create.foundation.item.ItemDescription;
-import com.simibubi.create.foundation.item.KineticStats;
-import com.simibubi.create.foundation.item.TooltipModifier;
-import net.createmod.catnip.lang.FontHelper;
-import net.createmod.ponder.foundation.PonderIndex;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.item.CreativeModeTab;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModLoadingContext;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+  import com.oierbravo.createsifter.content.contraptions.components.sifter.andesite.SifterBlockEntity;
+  import com.oierbravo.createsifter.content.contraptions.components.sifter.brass.BrassSifterBlockEntity;
+  import com.oierbravo.createsifter.infrastucture.config.MConfigs;
+  import com.oierbravo.createsifter.infrastucture.data.ModDataGen;
+  import com.oierbravo.createsifter.ponders.ModPonderPlugin;
+  import com.oierbravo.createsifter.register.*;
+  import com.oierbravo.mechanicals.utility.RegistrateLangBuilder;
+  import com.simibubi.create.foundation.data.CreateRegistrate;
+  import com.simibubi.create.foundation.item.ItemDescription;
+  import com.simibubi.create.foundation.item.KineticStats;
+  import com.simibubi.create.foundation.item.TooltipModifier;
+  import net.createmod.catnip.lang.FontHelper;
+  import net.createmod.ponder.foundation.PonderIndex;
+  import net.minecraft.client.resources.model.ModelResourceLocation;
+  import net.minecraft.resources.ResourceKey;
+  import net.minecraft.world.item.CreativeModeTab;
+  import net.neoforged.bus.api.IEventBus;
+  import net.neoforged.fml.ModContainer;
+  import net.neoforged.fml.ModLoadingContext;
+  import net.neoforged.fml.common.Mod;
+  import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+  import net.neoforged.neoforge.client.event.ModelEvent;
+  import org.apache.logging.log4j.LogManager;
+  import org.apache.logging.log4j.Logger;
 
-import static com.oierbravo.createsifter.ModConstants.MODID;
-
-
-@Mod(MODID)
-public class CreateSifter {
-    // Directly reference a log4j logger.
-    private static final Logger LOGGER = LogManager.getLogger(MODID);
-    public static IEventBus modEventBus;
-
-    public static final CreateRegistrate REGISTRATE =
-            CreateRegistrate.create(MODID).defaultCreativeTab((ResourceKey<CreativeModeTab>) null);
-
-    static {
-        REGISTRATE.setTooltipModifierFactory(item ->
-                new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)
-                        .andThen(TooltipModifier.mapNull(KineticStats.create(item)))
-        );
-    }
-    public CreateSifter(IEventBus modEventBus, ModContainer modContainer) {
-
-        REGISTRATE.registerEventListeners(modEventBus);
-        ModLoadingContext modLoadingContext = ModLoadingContext.get();
-
-        ModCreativeTabs.register(modEventBus);
+  import static com.oierbravo.createsifter.ModConstants.MODID;
 
 
-        ModBlocks.register();
+  @Mod(MODID)
+  public class CreateSifter {
+      // Directly reference a log4j logger.
+      private static final Logger LOGGER = LogManager.getLogger(MODID);
+      public static IEventBus modEventBus;
 
-        ModItems.register();
-        ModBlockEntities.register();
-        ModItemComponents.register(modEventBus);
-        MConfigs.register(modLoadingContext,modContainer);
+      public static final CreateRegistrate REGISTRATE =
+              CreateRegistrate.create(MODID).defaultCreativeTab((ResourceKey<CreativeModeTab>) null);
 
-        modEventBus.addListener(ModDataGen::gatherData);
+      static {
+          REGISTRATE.setTooltipModifierFactory(item ->
+                  new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)
+                          .andThen(TooltipModifier.mapNull(KineticStats.create(item)))
+          );
+      }
+      public CreateSifter(IEventBus modEventBus, ModContainer modContainer) {
 
-        ModRecipes.register(modEventBus);
+          REGISTRATE.registerEventListeners(modEventBus);
+          ModLoadingContext modLoadingContext = ModLoadingContext.get();
 
-        modEventBus.addListener(this::registerCapabilities);
-        modEventBus.addListener(this::doClientStuff);
-        generateLangEntries();
-    }
-    private void generateLangEntries(){
-        new RegistrateLangBuilder<>(MODID, registrate())
-            .addJade("Create Sifter")
-            .addCreativeTab( "Create sifting")
-            .add("recipe.sifting", "Sifting recipe")
-            .add("recipe.sifting.minimumspeed", "%1$s RPM")
-            .add("tooltip.mesh", "Mesh: %s")
-            .addRaw("emi.category.createsifter.sifting", "Sifting recipe")
-            .addRecipeRequirementTitle("advanced_sifter", "Brass sifter")
-            .addRecipeRequirementValue("advanced_sifter", "")
-            .addRecipeRequirementMissing("advanced_sifter", "Requires brass sifter")
-            .addRecipeRequirementTitle("waterlogged", "Waterlogged")
-            .addRecipeRequirementValue("waterlogged", "")
-            .addRecipeRequirementMissing("waterlogged", "Not Wartelogged")
-            //Ponder
-            .addPonderHeader( "sifter","Block sifting")
-            .addPonderText(1, "sifter","Sifter process items by sifting them")
-            .addPonderText(2, "sifter","They can be powered from the side using cogwheels")
-            .addPonderText(3, "sifter","Throw or Insert items at the top")
-            .addPonderText(4, "sifter","After some time, the result can be obtained via Right-click")
-            .addPonderText(5, "sifter","The outputs can also be extracted by automation");
-
-    }
-    public static CreateRegistrate registrate() {
-        return REGISTRATE;
-    }
-
-    @net.neoforged.bus.api.SubscribeEvent
-    public void registerCapabilities(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) {
-        SifterBlockEntity.registerCapabilities(event);
-        BrassSifterBlockEntity.registerCapabilities(event);
-    }
-
-    private void doClientStuff(final FMLClientSetupEvent event) {
-        ModPartials.init();
-        PonderIndex.addPlugin(new ModPonderPlugin());
-    }
+          ModCreativeTabs.register(modEventBus);
 
 
-    public static Logger getLogger(){
-        return LOGGER;
-    }
+          ModBlocks.register();
 
-}
+          ModItems.register();
+          ModBlockEntities.register();
+          ModItemComponents.register(modEventBus);
+          MConfigs.register(modLoadingContext,modContainer);
+
+          modEventBus.addListener(ModDataGen::gatherData);
+
+          ModRecipes.register(modEventBus);
+
+          modEventBus.addListener(this::registerCapabilities);
+          modEventBus.addListener(this::doClientStuff);
+          modEventBus.addListener(this::registerAdditionalModels);
+          generateLangEntries();
+      }
+      private void generateLangEntries(){
+          new RegistrateLangBuilder<>(MODID, registrate())
+              .addJade("Create Sifter")
+              .addCreativeTab( "Create sifting")
+              .add("recipe.sifting", "Sifting recipe")
+              .add("recipe.sifting.minimumspeed", "%1$s RPM")
+              .add("tooltip.mesh", "Mesh: %s")
+              .addRaw("emi.category.createsifter.sifting", "Sifting recipe")
+              .addRecipeRequirementTitle("advanced_sifter", "Brass sifter")
+              .addRecipeRequirementValue("advanced_sifter", "")
+              .addRecipeRequirementMissing("advanced_sifter", "Requires brass sifter")
+              .addRecipeRequirementTitle("waterlogged", "Waterlogged")
+              .addRecipeRequirementValue("waterlogged", "")
+              .addRecipeRequirementMissing("waterlogged", "Not Wartelogged")
+              //Ponder
+              .addPonderHeader( "sifter","Block sifting")
+              .addPonderText(1, "sifter","Sifter process items by sifting them")
+              .addPonderText(2, "sifter","They can be powered from the side using cogwheels")
+              .addPonderText(3, "sifter","Throw or Insert items at the top")
+              .addPonderText(4, "sifter","After some time, the result can be obtained via Right-click")
+              .addPonderText(5, "sifter","The outputs can also be extracted by automation");
+
+      }
+      public static CreateRegistrate registrate() {
+          return REGISTRATE;
+      }
+
+      @net.neoforged.bus.api.SubscribeEvent
+      public void registerCapabilities(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) {
+          SifterBlockEntity.registerCapabilities(event);
+          BrassSifterBlockEntity.registerCapabilities(event);
+      }
+
+      private void doClientStuff(final FMLClientSetupEvent event) {
+          ModPartials.init();
+          PonderIndex.addPlugin(new ModPonderPlugin());
+      }
+
+      public void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
+          event.register(ModelResourceLocation.standalone(ModPartials.SIFTER_COG.modelLocation()));
+          event.register(ModelResourceLocation.standalone(ModPartials.SIFTER_MESH.modelLocation()));
+          event.register(ModelResourceLocation.standalone(ModPartials.BRASS_SIFTER_COG.modelLocation()));
+          event.register(ModelResourceLocation.standalone(ModPartials.BRASS_SIFTER_MESH.modelLocation()));
+      }
+
+      public static Logger getLogger(){
+          return LOGGER;
+      }
+
+  }
