@@ -3,7 +3,7 @@ name: CreateSifting
 on:
   push:
     tags:
-      - '2.3.1'
+      - 'v'
   workflow_dispatch:
 
 permissions:
